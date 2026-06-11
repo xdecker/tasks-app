@@ -100,12 +100,14 @@ export default function TasksScreen() {
               <IconButton
                 icon="close"
                 size={20}
+                testID="btn-close-toolbar"
                 iconColor={theme.colors.onSurfaceVariant}
                 onPress={toggleSelectionMode}
               />
               <Button
                 mode="text"
                 compact
+                testID="btn-select-all"
                 onPress={selectAll}
                 textColor={theme.colors.primary}
                 labelStyle={styles.toolbarLabel}
@@ -115,6 +117,7 @@ export default function TasksScreen() {
               <Button
                 mode="text"
                 compact
+                testID="btn-deselect-all"
                 onPress={deselectAll}
                 textColor={theme.colors.onSurfaceVariant}
                 labelStyle={styles.toolbarLabel}
@@ -133,6 +136,7 @@ export default function TasksScreen() {
               <IconButton
                 icon="delete-outline"
                 size={20}
+                testID="btn-delete-selected"
                 iconColor={selectedCount > 0 ? theme.colors.error : theme.colors.outline}
                 disabled={selectedCount === 0}
                 onPress={deleteSelected}
@@ -151,6 +155,7 @@ export default function TasksScreen() {
               <IconButton
                 icon="checkbox-multiple-outline"
                 size={20}
+                testID="btn-select-mode"
                 iconColor={theme.colors.onSurfaceVariant}
                 onPress={toggleSelectionMode}
               />
@@ -200,6 +205,7 @@ export default function TasksScreen() {
                   <IconButton
                     icon="delete-outline"
                     size={20}
+                    testID={"delete-" + item.id}
                     iconColor={theme.colors.onSurfaceVariant}
                     onPress={() => removeTask(item.id)}
                   />
@@ -211,12 +217,13 @@ export default function TasksScreen() {
       )}
 
       {!selectionMode && (
-        <FAB
-          icon="plus"
-          style={[styles.fab, { backgroundColor: theme.colors.primary }]}
-          color={theme.colors.onPrimary}
-          onPress={() => setModalVisible(true)}
-        />
+      <FAB
+        icon="plus"
+        testID="fab-add"
+        style={[styles.fab, { backgroundColor: theme.colors.primary }]}
+        color={theme.colors.onPrimary}
+        onPress={() => setModalVisible(true)}
+      />
       )}
 
       <Modal
@@ -246,10 +253,10 @@ export default function TasksScreen() {
           autoFocus
         />
         <View style={styles.modalActions}>
-          <Button mode="text" onPress={handleDismiss} style={{ marginRight: 8 }}>
+          <Button mode="text" onPress={handleDismiss} testID="btn-cancel" style={{ marginRight: 8 }}>
             Cancelar
           </Button>
-          <Button mode="contained" onPress={handleAdd} disabled={isEmpty}>
+          <Button mode="contained" onPress={handleAdd} testID="btn-add" disabled={isEmpty}>
             Agregar
           </Button>
         </View>
