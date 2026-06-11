@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { FlatList, Image, StyleSheet, View } from 'react-native';
-import { ActivityIndicator, Icon, Text, useTheme } from 'react-native-paper';
+import { ActivityIndicator, Icon, Text, useTheme, type MD3Theme } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 interface Element {
@@ -8,6 +8,51 @@ interface Element {
   name: string;
   avatar: string;
   createdAt: string;
+}
+
+function ElementItem({ item, theme }: { item: Element; theme: MD3Theme }) {
+  const [imageError, setImageError] = useState(false);
+
+  return (
+    <View
+      style={[
+        styles.item,
+        {
+          backgroundColor: theme.colors.surface,
+          borderColor: theme.colors.outlineVariant,
+        },
+      ]}
+    >
+      {!imageError ? (
+        <Image
+          source={{ uri: item.avatar }}
+          style={styles.avatar}
+          onError={() => setImageError(true)}
+        />
+      ) : (
+        <View
+          style={[
+            styles.avatar,
+            {
+              backgroundColor: theme.colors.surfaceVariant,
+              justifyContent: 'center',
+              alignItems: 'center',
+            },
+          ]}
+        >
+          <Icon source="account" size={24} color={theme.colors.onSurfaceVariant} />
+        </View>
+      )}
+      <View style={styles.itemText}>
+        <Text variant="titleMedium" style={{ color: theme.colors.onSurface }}>
+          {item.name}
+        </Text>
+        <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+          {item.createdAt}
+        </Text>
+      </View>
+    </View>
+  );
 }
 
 export default function ListadoScreen() {
@@ -31,6 +76,11 @@ export default function ListadoScreen() {
         setLoading(false);
       });
   }, []);
+
+  const renderItem = useCallback(
+    ({ item }: { item: Element }) => <ElementItem item={item} theme={theme} />,
+    [theme],
+  );
 
   if (loading) {
     return (
@@ -75,33 +125,7 @@ export default function ListadoScreen() {
         data={elements}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
-        renderItem={({ item }) => (
-          <View
-            style={[
-              styles.item,
-              {
-                backgroundColor: theme.colors.surface,
-                borderColor: theme.colors.outlineVariant,
-              },
-            ]}
-          >
-            <Image source={{ uri: item.avatar }} style={styles.avatar} />
-            <View style={styles.itemText}>
-              <Text
-                variant="titleMedium"
-                style={{ color: theme.colors.onSurface }}
-              >
-                {item.name}
-              </Text>
-              <Text
-                variant="bodySmall"
-                style={{ color: theme.colors.onSurfaceVariant }}
-              >
-                {item.createdAt}
-              </Text>
-            </View>
-          </View>
-        )}
+        renderItem={renderItem}
       />
     </SafeAreaView>
   );
@@ -119,7 +143,7 @@ const styles = StyleSheet.create({
   list: {
     paddingHorizontal: 20,
     paddingVertical: 12,
-    gap: 8,
+    gap: 10,
   },
   item: {
     flexDirection: 'row',
