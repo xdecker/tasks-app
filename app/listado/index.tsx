@@ -10,6 +10,18 @@ interface Element {
   createdAt: string;
 }
 
+function formatDate(raw: string): string {
+  const d = new Date(raw);
+  if (isNaN(d.getTime())) return raw;
+  //utc para mantenerlo global
+  const y = d.getUTCFullYear();
+  const mo = String(d.getUTCMonth() + 1).padStart(2, '0');
+  const dd = String(d.getUTCDate()).padStart(2, '0');
+  const h = String(d.getUTCHours()).padStart(2, '0');
+  const mi = String(d.getUTCMinutes()).padStart(2, '0');
+  return `${y}-${mo}-${dd} ${h}:${mi}`;
+}
+
 function ElementItem({ item, theme }: { item: Element; theme: MD3Theme }) {
   const [imageError, setImageError] = useState(false);
 
@@ -48,7 +60,7 @@ function ElementItem({ item, theme }: { item: Element; theme: MD3Theme }) {
           {item.name}
         </Text>
         <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
-          {item.createdAt}
+          {formatDate(item.createdAt)}
         </Text>
       </View>
     </View>
