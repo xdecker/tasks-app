@@ -1,5 +1,5 @@
 import { useTaskStore } from '@/store/use-task-store';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 import {
   Button,
@@ -22,6 +22,9 @@ export default function TasksScreen() {
   const [newTaskDescription, setNewTaskDescription] = useState('');
   const [snackbarVisible, setSnackbarVisible] = useState(false);
 
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
   const isEmpty = newTaskDescription.trim().length === 0;
 
   const handleAdd = () => {
@@ -36,6 +39,31 @@ export default function TasksScreen() {
     setModalVisible(false);
     setNewTaskDescription('');
   };
+
+  const toggleSelectionMode = () => {
+    setSelectionMode((prev) => !prev);
+    setSelectedIds(new Set());
+  };
+
+  const toggleItem = useCallback((id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const selectAll = () => setSelectedIds(new Set(tasks.map((t) => t.id)));
+  const deselectAll = () => setSelectedIds(new Set());
+
+  const deleteSelected = () => {
+    selectedIds.forEach((id) => removeTask(id));
+    setSelectedIds(new Set());
+    setSelectionMode(false);
+  };
+
+  const selectedCount = selectedIds.size;
 
   return (
     <SafeAreaView
@@ -59,46 +87,137 @@ export default function TasksScreen() {
           </Text>
         </View>
       ) : (
-        <FlatList
-          data={tasks}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.list}
-          renderItem={({ item }) => (
+        <>
+          {selectionMode ? (
             <View
               style={[
-                styles.taskItem,
+                styles.toolbar,
                 {
-                  backgroundColor: theme.colors.surface,
-                  borderColor: theme.colors.outlineVariant,
+                  backgroundColor: theme.colors.surfaceVariant,
                 },
               ]}
             >
-              <Text
-                variant="bodyLarge"
-                style={{
-                  color: theme.colors.onSurface,
-                  flex: 1,
-                }}
+              <IconButton
+                icon="close"
+                size={20}
+                iconColor={theme.colors.onSurfaceVariant}
+                onPress={toggleSelectionMode}
+              />
+              <Button
+                mode="text"
+                compact
+                onPress={selectAll}
+                textColor={theme.colors.primary}
+                labelStyle={styles.toolbarLabel}
               >
-                {item.description}
-              </Text>
+                Todo
+              </Button>
+              <Button
+                mode="text"
+                compact
+                onPress={deselectAll}
+                textColor={theme.colors.onSurfaceVariant}
+                labelStyle={styles.toolbarLabel}
+              >
+                Ninguno
+              </Button>
+              <View style={{ flex: 1 }} />
+              {selectedCount > 0 && (
+                <Text
+                  variant="labelLarge"
+                  style={{ color: theme.colors.error, marginRight: 4, fontWeight: '600' }}
+                >
+                  {selectedCount}
+                </Text>
+              )}
               <IconButton
                 icon="delete-outline"
                 size={20}
+                iconColor={selectedCount > 0 ? theme.colors.error : theme.colors.outline}
+                disabled={selectedCount === 0}
+                onPress={deleteSelected}
+              />
+            </View>
+          ) : (
+            <View
+              style={[
+                styles.toolbar,
+                {
+                  backgroundColor: theme.colors.surfaceVariant,
+                },
+              ]}
+            >
+              <View style={{ flex: 1 }} />
+              <IconButton
+                icon="checkbox-multiple-outline"
+                size={20}
                 iconColor={theme.colors.onSurfaceVariant}
-                onPress={() => removeTask(item.id)}
+                onPress={toggleSelectionMode}
               />
             </View>
           )}
-        />
+
+          <FlatList
+            data={tasks}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={styles.list}
+            renderItem={({ item }) => (
+              <View
+                style={[
+                  styles.taskItem,
+                  {
+                    backgroundColor: selectionMode && selectedIds.has(item.id)
+                      ? theme.colors.primaryContainer
+                      : theme.colors.surface,
+                    borderColor: selectionMode && selectedIds.has(item.id)
+                      ? theme.colors.primary
+                      : theme.colors.outlineVariant,
+                  },
+                ]}
+              >
+                {selectionMode && (
+                  <IconButton
+                    icon={selectedIds.has(item.id) ? 'checkbox-marked' : 'checkbox-blank-outline'}
+                    size={22}
+                    iconColor={
+                      selectedIds.has(item.id) ? theme.colors.primary : theme.colors.outline
+                    }
+                    onPress={() => toggleItem(item.id)}
+                  />
+                )}
+                <Text
+                  variant="bodyLarge"
+                  style={{
+                    color: theme.colors.onSurface,
+                    flex: 1,
+                    marginLeft: selectionMode ? 0 : 16,
+                  }}
+                  onPress={selectionMode ? () => toggleItem(item.id) : undefined}
+                >
+                  {item.description}
+                </Text>
+                {!selectionMode && (
+                  <IconButton
+                    icon="delete-outline"
+                    size={20}
+                    iconColor={theme.colors.onSurfaceVariant}
+                    onPress={() => removeTask(item.id)}
+                  />
+                )}
+              </View>
+            )}
+          />
+        </>
       )}
 
-      <FAB
-        icon="plus"
-        style={[styles.fab, { backgroundColor: theme.colors.primary }]}
-        color={theme.colors.onPrimary}
-        onPress={() => setModalVisible(true)}
-      />
+      {!selectionMode && (
+        <FAB
+          icon="plus"
+          style={[styles.fab, { backgroundColor: theme.colors.primary }]}
+          color={theme.colors.onPrimary}
+          onPress={() => setModalVisible(true)}
+        />
+      )}
 
       <Modal
         visible={modalVisible}
@@ -143,7 +262,7 @@ export default function TasksScreen() {
         action={{ label: 'Cerrar', onPress: () => setSnackbarVisible(false) }}
         theme={{
           ...theme,
-          colors: { ...theme.colors, inverseOnSurface: '#16A34A', },
+          colors: { ...theme.colors, inverseOnSurface: '#16A34A' },
         }}
       >
         Tarea agregada correctamente
@@ -162,6 +281,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 24,
   },
+  toolbar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 4,
+  },
+  toolbarLabel: {
+    fontSize: 13,
+  },
   list: {
     paddingHorizontal: 20,
     paddingVertical: 12,
@@ -170,7 +297,6 @@ const styles = StyleSheet.create({
   taskItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingLeft: 16,
     paddingRight: 4,
     borderRadius: 12,
     borderWidth: 1,
