@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { FlatList, Image, RefreshControl, StyleSheet, View } from 'react-native';
-import { ActivityIndicator, Icon, Text, useTheme, type MD3Theme } from 'react-native-paper';
+import { ActivityIndicator, Icon, Snackbar, Text, useTheme, type MD3Theme } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 interface Element {
@@ -116,42 +116,50 @@ export default function ListadoScreen() {
     );
   }
 
-  if (error) {
-    return (
-      <SafeAreaView
-        style={[styles.centered, { backgroundColor: theme.colors.background }]}
-        edges={['bottom']}
-      >
-        <Icon source="alert-circle-outline" size={48} color={theme.colors.error} />
-        <Text
-          variant="bodyLarge"
-          style={{ color: theme.colors.error, marginTop: 12 }}
-        >
-          {error}
-        </Text>
-      </SafeAreaView>
-    );
-  }
-
   return (
     <SafeAreaView
       style={[styles.container, { backgroundColor: theme.colors.background }]}
       edges={['bottom']}
     >
-      <FlatList
-        data={elements}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.list}
-        renderItem={renderItem}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={() => fetchElements(true)}
-            tintColor={theme.colors.primary}
-            colors={[theme.colors.primary]}
-          />
-        }
-      />
+      {elements.length === 0 && error ? (
+        <View style={styles.centered}>
+          <Icon source="alert-circle-outline" size={48} color={theme.colors.error} />
+          <Text
+            variant="bodyLarge"
+            style={{ color: theme.colors.error, marginTop: 12 }}
+          >
+            {error}
+          </Text>
+        </View>
+      ) : (
+        <FlatList
+          data={elements}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.list}
+          renderItem={renderItem}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={() => fetchElements(true)}
+              tintColor={theme.colors.primary}
+              colors={[theme.colors.primary]}
+            />
+          }
+        />
+      )}
+
+      <Snackbar
+        visible={!!error && elements.length > 0}
+        onDismiss={() => setError(null)}
+        duration={4000}
+        action={{ label: 'Cerrar', onPress: () => setError(null) }}
+        theme={{
+          ...theme,
+          colors: { ...theme.colors, inverseOnSurface: '#DC2626' },
+        }}
+      >
+        {error ?? ''}
+      </Snackbar>
     </SafeAreaView>
   );
 }
