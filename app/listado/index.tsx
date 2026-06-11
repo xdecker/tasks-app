@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { FlatList, Image, StyleSheet, View } from 'react-native';
+import { FlatList, Image, RefreshControl, StyleSheet, View } from 'react-native';
 import { ActivityIndicator, Icon, Text, useTheme, type MD3Theme } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -59,23 +59,28 @@ export default function ListadoScreen() {
   const theme = useTheme();
   const [elements, setElements] = useState<Element[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetch('https://6172cfe5110a740017222e2b.mockapi.io/elements')
-      .then((res) => {
-        if (!res.ok) throw new Error('Error al obtener los datos');
-        return res.json();
-      })
-      .then((data) => {
-        setElements(data);
-        setLoading(false);
-      })
-      .catch((err) => {
-        setError(err.message);
-        setLoading(false);
-      });
+  const fetchElements = useCallback(async (isRefresh = false) => {
+    if (isRefresh) setRefreshing(true);
+    try {
+      const res = await fetch('https://6172cfe5110a740017222e2b.mockapi.io/elements');
+      if (!res.ok) throw new Error('Error al obtener los datos');
+      const data = await res.json();
+      setElements(data);
+      setError(null);
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchElements();
+  }, [fetchElements]);
 
   const renderItem = useCallback(
     ({ item }: { item: Element }) => <ElementItem item={item} theme={theme} />,
@@ -126,6 +131,14 @@ export default function ListadoScreen() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
         renderItem={renderItem}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => fetchElements(true)}
+            tintColor={theme.colors.primary}
+            colors={[theme.colors.primary]}
+          />
+        }
       />
     </SafeAreaView>
   );
