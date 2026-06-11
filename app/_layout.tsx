@@ -14,8 +14,8 @@ export default function RootLayout() {
     <ThemeProvider value={isDark ? DarkTheme : DefaultTheme}>
       <PaperProvider theme={isDark ? PaperDarkTheme : LightTheme}>
         <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="index" />
-          <Stack.Screen name="tasks/index" options={{ headerShown: true, title: 'Tasks' }} />
+          <Stack.Screen name="index" options={{ title: 'Inicio' }} />
+          <Stack.Screen name="tasks/index" options={{ headerShown: true, title: 'Tareas' }} />
           <Stack.Screen name="listado/index" options={{ headerShown: true, title: 'Listado' }} />
         </Stack>
         <StatusBar style={isDark ? 'light' : 'dark'} />
