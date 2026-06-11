@@ -1,4 +1,6 @@
 import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export interface Task {
   id: string;
@@ -11,17 +13,25 @@ interface TaskStore {
   removeTask: (id: string) => void;
 }
 
-export const useTaskStore = create<TaskStore>((set) => ({
-  tasks: [],
-  addTask: (description) =>
-    set((state) => ({
-      tasks: [
-        ...state.tasks,
-        { id: Date.now().toString(), description },
-      ],
-    })),
-  removeTask: (id) =>
-    set((state) => ({
-      tasks: state.tasks.filter((task) => task.id !== id),
-    })),
-}));
+export const useTaskStore = create<TaskStore>()(
+  persist(
+    (set) => ({
+      tasks: [],
+      addTask: (description) =>
+        set((state) => ({
+          tasks: [
+            ...state.tasks,
+            { id: Date.now().toString(), description },
+          ],
+        })),
+      removeTask: (id) =>
+        set((state) => ({
+          tasks: state.tasks.filter((task) => task.id !== id),
+        })),
+    }),
+    {
+      name: 'task-store',
+      storage: createJSONStorage(() => AsyncStorage),
+    },
+  ),
+);
