@@ -21,7 +21,7 @@ export const useTaskStore = create<TaskStore>()(
         set((state) => ({
           tasks: [
             ...state.tasks,
-            { id: Date.now().toString(), description },
+            { id: Date.now().toString() + Math.random().toString(36).slice(2, 8), description },
           ],
         })),
       removeTask: (id) =>
